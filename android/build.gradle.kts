@@ -18,19 +18,13 @@ tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
 
+// Esta parte força todos os plugins a usarem o SDK 35
 subprojects {
-    project.plugins.configureEach {
-        when (this) {
-            is com.android.build.gradle.AppPlugin,
-            is com.android.build.gradle.LibraryPlugin -> {
-                val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
-                android?.apply {
-                    compileSdkVersion(35)
-                    defaultConfig {
-                        targetSdkVersion(35)
-                    }
-                }
-            }
+    afterEvaluate {
+        if (project.hasProperty("android")) {
+            val android = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
+            android.compileSdkVersion(35)
+            android.defaultConfig.targetSdkVersion(35)
         }
     }
 }
