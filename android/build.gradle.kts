@@ -29,9 +29,9 @@ subprojects {
             is com.android.build.gradle.LibraryPlugin -> {
                 val android = project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
                 android?.apply {
-                    compileSdkVersion(34)
+                    compileSdkVersion(35) // Mudar para 35
                     defaultConfig {
-                        targetSdkVersion(34)
+                        targetSdkVersion(35) // Mudar para 35
                     }
                 }
             }
