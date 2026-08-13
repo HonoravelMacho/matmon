@@ -1,17 +1,17 @@
-# matmon
+# Matmon (מַטְמוֹן) - Caça ao Tesouro Bíblico
 
-A new Flutter project.
+O **Matmon** é um aplicativo 100% Offline para gincanas de igrejas.
 
-## Getting Started
+## 🏹 Papéis no Jogo
+- **Organizador:** Cria os projetos (mapas), define as equipes e embaralha as pistas. Gera o QR Code Mestre.
+- **Staff (Jesus):** Recebe o mapa do organizador. É responsável por:
+  1. Dar a benção inicial (Sincronizar o mapa com os jogadores).
+  2. Fornecer o **Selo Vermelho (Perdão)** para destravar quem encontrou o **Selo Preto (Pecado/Erro)**.
+- **Caçador:** Escaneia os versículos e busca os QR Codes físicos no local.
 
-This project is a starting point for a Flutter application.
+## 🔐 Segurança Offline
+O app utiliza uma cifra alfanumérica para que as palavras-chave nos QR Codes físicos não sejam óbvias, impedindo que jogadores tentem "adivinhar" o código sem encontrar o local físico.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 💰 Futuro e Monetização
+- **Jogadores e Staff:** 100% Gratuito.
+- **Organizadores:** Opção Pro via In-App Purchase para gerenciar múltiplos projetos e backup no Google Drive.
