@@ -1,64 +1,40 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/clue.dart';
-import '../../core/utils/crypto_util.dart';
 import 'dart:convert';
-
-enum GameStatus { idle, waitingBlessing, playing, locked, finished }
+import '../../domain/entities/project.dart';
+import '../../domain/entities/clue.dart';
 
 class GameProvider with ChangeNotifier {
-  List<Clue> _currentRoute = [];
-  int _currentIndex = 0;
-  GameStatus _status = GameStatus.idle;
-  String? _projectName;
+  List<Project> _savedProjects = [];
+  List<Project> get savedProjects => _savedProjects;
 
-  GameStatus get status => _status;
-  String? get projectName => _projectName;
-  int get progress => _currentIndex;
-  int get totalClues => _currentRoute.length;
-  Clue get currentClue => _currentRoute.isNotEmpty ? _currentRoute[_currentIndex] : Clue(id: '0', verseText: 'Sem pistas', reference: '', keyword: '');
+  // Lógica de Embaralhamento para as Equipes
+  List<Map<String, dynamic>> generateTeamRoutes(Project project) {
+    List<Map<String, dynamic>> teamRoutes = [];
+    
+    for (int t = 0; t < project.teamCount; t++) {
+      List<Clue> shuffledClues = List.from(project.clues)..shuffle();
+      List<Map<String, String>> route = [];
 
-  // Jesus recebe o projeto do Organizador
-  void loadProjectAsStaff(String qrData) {
-    try {
-      final decoded = jsonDecode(qrData);
-      _projectName = decoded['p'];
-      var cluesJson = decoded['c'] as List;
-      _currentRoute = cluesJson.map((item) => Clue.fromJson(item)).toList();
-      notifyListeners();
-    } catch (e) {
-      print("Erro ao carregar projeto");
+      for (var clue in shuffledClues) {
+        // Se tem menos versículos que equipes, ele repete aleatoriamente
+        String selectedVerse = clue.verses[t % clue.verses.length];
+        route.add({
+          'v': selectedVerse,
+          'k': clue.keyword,
+        });
+      }
+      teamRoutes.add({'team': t + 1, 'route': route});
     }
+    return teamRoutes;
   }
 
-  // Caçador recebe a benção e o mapa de Jesus
-  void receiveBlessing(String qrData) {
-    loadProjectAsStaff(qrData);
-    _status = GameStatus.playing;
-    _currentIndex = 0;
+  void addProject(Project p) {
+    _savedProjects.add(p);
     notifyListeners();
   }
 
-  void validateQr(String scannedData) {
-    String encryptedKey = CryptoUtil.toAlphanumeric(currentClue.keyword);
-    if (scannedData == encryptedKey) {
-      _currentIndex++;
-      if (_currentIndex >= _currentRoute.length) _status = GameStatus.finished;
-    } else {
-      _status = GameStatus.locked;
-    }
-    notifyListeners();
-  }
-
-  void receivePardon(String token) {
-    // Aqui validamos o token dinâmico de Jesus
-    _status = GameStatus.playing;
-    notifyListeners();
-  }
-  
-  void reset() {
-    _status = GameStatus.idle;
-    _currentRoute = [];
-    _currentIndex = 0;
+  void deleteProject(int index) {
+    _savedProjects.removeAt(index);
     notifyListeners();
   }
 }

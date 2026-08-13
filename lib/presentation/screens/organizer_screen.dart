@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'dart:convert';
+import 'package:provider/provider.dart';
+import '../providers/game_provider.dart';
+import '../../domain/entities/project.dart';
 import '../../domain/entities/clue.dart';
 
 class OrganizerScreen extends StatefulWidget {
@@ -9,44 +10,53 @@ class OrganizerScreen extends StatefulWidget {
 }
 
 class _OrganizerScreenState extends State<OrganizerScreen> {
-  List<Clue> myClues = [];
-  final nameCtrl = TextEditingController(text: "Missão Betel");
+  final nameCtrl = TextEditingController();
+  final teamCtrl = TextEditingController(text: "1");
 
-  void addClue() {
-    setState(() {
-      myClues.add(Clue(id: "1", verseText: "Texto do Versículo", reference: "Ref 1:1", keyword: "ALVO"));
-    });
+  void _showAddProject() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Novo Projeto"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameCtrl, decoration: InputDecoration(labelText: "Nome")),
+            TextField(controller: teamCtrl, decoration: InputDecoration(labelText: "Nº de Equipes"), keyboardType: TextInputType.number),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Cancelar")),
+          ElevatedButton(onPressed: () {
+            final p = Project(name: nameCtrl.text, teamCount: int.parse(teamCtrl.text), clues: []);
+            Provider.of<GameProvider>(context, listen: false).addProject(p);
+            Navigator.pop(ctx);
+          }, child: Text("Criar")),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    String projectJson = jsonEncode({
-      'p': nameCtrl.text,
-      'c': myClues.map((e) => e.toJson()).toList(),
-    });
-
+    final projects = Provider.of<GameProvider>(context).savedProjects;
     return Scaffold(
-      appBar: AppBar(title: Text("CRIAR CAÇA AO TESOURO")),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: TextField(controller: nameCtrl, decoration: InputDecoration(labelText: "Nome do Projeto")),
+      appBar: AppBar(title: Text("MEUS PROJETOS")),
+      floatingActionButton: FloatingActionButton(onPressed: _showAddProject, child: Icon(Icons.add)),
+      body: ListView.builder(
+        itemCount: projects.length,
+        itemBuilder: (ctx, i) => Card(
+          margin: EdgeInsets.all(8),
+          child: ListTile(
+            title: Text(projects[i].name),
+            subtitle: Text("${projects[i].teamCount} Equipes | ${projects[i].clues.length} Pistas"),
+            trailing: IconButton(icon: Icon(Icons.delete, color: Colors.red), onPressed: () => Provider.of<GameProvider>(context, listen: false).deleteProject(i)),
+            onTap: () {
+              // Aqui abriremos a edição de pistas no próximo passo
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Em breve: Editar pistas de ${projects[i].name}")));
+            },
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: myClues.length,
-              itemBuilder: (context, index) => ListTile(
-                title: Text(myClues[index].keyword),
-                subtitle: Text(myClues[index].reference),
-                trailing: IconButton(icon: Icon(Icons.delete), onPressed: () => setState(() => myClues.removeAt(index))),
-              ),
-            ),
-          ),
-          if (myClues.isNotEmpty)
-            QrImageView(data: projectJson, size: 150),
-          ElevatedButton(onPressed: addClue, child: Text("Adicionar Pista (Exemplo)"))
-        ],
+        ),
       ),
     );
   }
