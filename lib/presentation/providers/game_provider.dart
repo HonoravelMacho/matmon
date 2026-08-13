@@ -5,7 +5,7 @@ import '../../domain/entities/clue.dart';
 
 class GameProvider with ChangeNotifier {
   List<Project> _savedProjects = [];
-  Project? _activeProject; // O projeto que está sendo jogado agora
+  Project? _activeProject; 
 
   List<Project> get savedProjects => _savedProjects;
   Project? get activeProject => _activeProject;
@@ -16,12 +16,21 @@ class GameProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void updateProject(int index, Project p) {
+    _savedProjects[index] = p;
+    notifyListeners();
+  }
+
   void deleteProject(int index) {
     _savedProjects.removeAt(index);
     notifyListeners();
   }
 
-  // Jesus ou Caçador carregam o mapa recebido
+  // Gera o "Link PIX" (JSON) do projeto para enviar para Jesus
+  String generateShareLink(Project p) {
+    return jsonEncode(p.toJson());
+  }
+
   void loadActiveProject(String qrData) {
     try {
       final decoded = jsonDecode(qrData);
