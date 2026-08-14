@@ -32,7 +32,6 @@ class HunterScreen extends StatelessWidget {
               onPressed: () => _openScanner(context, game),
             ),
             SizedBox(height: 10),
-            // Botão para simular o escaneamento via teclado (Teste 1 celular)
             TextButton(
               onPressed: () => _simulateScan(context, game),
               child: Text("Simular Escaneamento (Digitar Código)"),
@@ -50,14 +49,19 @@ class HunterScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(Icons.explore, size: 80, color: Colors.orange),
+            SizedBox(height: 20),
             Text("Peça a bênção de Jesus para começar!"),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 ClipboardData? data = await Clipboard.getData('text/plain');
                 if (data?.text != null) {
-                  // Por enquanto, forçamos a Equipe 1 no teste
                   game.startHunterGame(data!.text!, 1);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Nada copiado! Pegue o mapa com Jesus primeiro."))
+                  );
                 }
               },
               child: Text("Colar Mapa de Jesus (Sincronizar)"),
@@ -105,7 +109,10 @@ class HunterScreen extends StatelessWidget {
             Icon(Icons.emoji_events, size: 100, color: Colors.amber),
             Text("TESOURO ENCONTRADO!", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             SizedBox(height: 20),
-            ElevatedButton(onPressed: () => game.reset(), child: Text("Voltar ao Início")),
+            ElevatedButton(
+              onPressed: () => game.resetGame(), 
+              child: Text("Voltar ao Início")
+            ),
           ],
         ),
       ),
@@ -137,7 +144,7 @@ class HunterScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text("Simular QR Físico"),
-        content: TextField(controller: ctrl, decoration: InputDecoration(hintText: "Ex: 111 (Cifra de AGUA)")),
+        content: TextField(controller: ctrl, decoration: InputDecoration(hintText: "Digite a cifra da palavra")),
         actions: [
           ElevatedButton(onPressed: () {
             game.validateQr(ctrl.text);
