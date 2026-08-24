@@ -1,10 +1,14 @@
+import 'dart:math';
 import 'clue.dart';
 
 class Project {
+  String id;
   String name;
   int teamCount;
   List<Clue> clues;
-  Project({required this.name, this.teamCount = 1, required this.clues});
+
+  Project({String? id, required this.name, this.teamCount = 1, required this.clues})
+      : id = id ?? (DateTime.now().microsecondsSinceEpoch * 1000 + Random().nextInt(1000)).toString();
 
   Map<String, dynamic> toJson() => {
     'n': name,
@@ -13,8 +17,8 @@ class Project {
   };
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
-    name: json['n'],
-    teamCount: json['tc'],
-    clues: (json['c'] as List).map((e) => Clue.fromJson(e)).toList(),
+    name: json['n'] ?? 'Projeto',
+    teamCount: json['tc'] ?? 1,
+    clues: (json['c'] as List? ?? []).map((e) => Clue.fromJson(e)).toList(),
   );
 }
