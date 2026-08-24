@@ -12,7 +12,7 @@ void main() {
         create: (_) => GameProvider(),
         child: MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: HomeScreen(),
+          home: const HomeScreen(),
         ),
       ),
     );
