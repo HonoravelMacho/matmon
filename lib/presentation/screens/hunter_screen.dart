@@ -2,13 +2,109 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../providers/game_provider.dart';
 import 'locked_view.dart';
 import 'victory_view.dart';
 
-class HunterScreen extends StatelessWidget {
+class HunterScreen extends StatefulWidget {
   const HunterScreen({super.key});
+
+  @override
+  State<HunterScreen> createState() => _HunterScreenState();
+}
+
+class _HunterScreenState extends State<HunterScreen> {
+  MobileScannerController? _scannerController;
+
+  @override
+  void dispose() {
+    _scannerController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkPermissionAndOpenScanner(BuildContext context, GameProvider game) async {
+    final status = await Permission.camera.request();
+    if (status.isGranted) {
+      if (!mounted) return;
+      _openScanner(context, game);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Permissão de câmera negada!")),
+      );
+    }
+  }
+
+  void _openScanner(BuildContext context, GameProvider game) {
+    _scannerController = MobileScannerController();
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              MobileScanner(
+                controller: _scannerController,
+                onDetect: (capture) {
+                  final barcodes = capture.barcodes;
+                  if (barcodes.isNotEmpty) {
+                    final code = barcodes.first.rawValue ?? "";
+                    game.validateQr(code);
+                    Navigator.pop(ctx);
+                  }
+                },
+              ),
+              // Moldura de mira
+              IgnorePointer(
+                child: Container(
+                  width: 240,
+                  height: 240,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFD4AF37), width: 3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 16,
+                right: 16,
+                child: CircleAvatar(
+                  backgroundColor: Colors.black54,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 24,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text("Aponte para a cifra do local",
+                      style: TextStyle(color: Color(0xFFF0E6D2))),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) {
+      _scannerController?.dispose();
+      _scannerController = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +182,7 @@ class HunterScreen extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text("ESCANEAR QR CODE FÍSICO", style: TextStyle(fontWeight: FontWeight.bold)),
-                onPressed: () => _openScanner(context, game),
+                onPressed: () => _checkPermissionAndOpenScanner(context, game),
               ),
               const SizedBox(height: 12),
               TextButton(
@@ -100,8 +196,6 @@ class HunterScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ---------- INÍCIO: COLAR MAPA + ESCOLHER EQUIPE ----------
 
   Widget _startView(BuildContext context, GameProvider game) {
     return Scaffold(
@@ -196,60 +290,6 @@ class HunterScreen extends StatelessWidget {
     Color(0xFF6A1B9A), Color(0xFF00838F), Color(0xFF795548), Color(0xFF37474F),
   ];
 
-  // ---------- SELO PRETO: INTERDIÇÃO ----------
-
-  // ---------- VITÓRIA: TESOURO ENCONTRADO ----------
-  void _openScanner(BuildContext context, GameProvider game) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.7,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              MobileScanner(
-                onDetect: (capture) {
-                  final barcodes = capture.barcodes;
-                  if (barcodes.isNotEmpty) {
-                    game.validateQr(barcodes.first.rawValue ?? "");
-                    Navigator.pop(ctx);
-                  }
-                },
-              ),
-              // Moldura de mira
-              IgnorePointer(
-                child: Container(
-                  width: 240,
-                  height: 240,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFD4AF37), width: 3),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 24,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text("Aponte para a cifra do local",
-                      style: TextStyle(color: Color(0xFFF0E6D2))),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   void _simulateScan(BuildContext context, GameProvider game) {
     final ctrl = TextEditingController();
     showDialog(
@@ -279,3 +319,4 @@ class HunterScreen extends StatelessWidget {
     );
   }
 }
+

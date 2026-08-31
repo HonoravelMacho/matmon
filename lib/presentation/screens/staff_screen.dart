@@ -18,17 +18,29 @@ class StaffScreen extends StatefulWidget {
   State<StaffScreen> createState() => _StaffScreenState();
 }
 
-class _StaffScreenState extends State<StaffScreen> {
+class _StaffScreenState extends State<StaffScreen> with WidgetsBindingObserver {
   String _token = '';
   int _secondsLeft = CryptoUtil.periodSeconds;
   Timer? _timer;
+  MobileScannerController? _scannerController;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _refreshToken();
     // Sincroniza o token com o relógio global (janelas de 15s fechadas)
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_scannerController == null) return;
+    if (!state.index.isEven) {
+      _scannerController?.stop();
+    } else {
+      _scannerController?.start();
+    }
   }
 
   void _tick() {
@@ -49,7 +61,9 @@ class _StaffScreenState extends State<StaffScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
+    _scannerController?.dispose();
     super.dispose();
   }
 
@@ -70,6 +84,8 @@ class _StaffScreenState extends State<StaffScreen> {
   }
 
   void _scanProject(BuildContext context, GameProvider game) {
+    _scannerController = MobileScannerController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -82,11 +98,14 @@ class _StaffScreenState extends State<StaffScreen> {
             alignment: Alignment.center,
             children: [
               MobileScanner(
+                controller: _scannerController,
                 onDetect: (capture) {
                   final barcodes = capture.barcodes;
                   if (barcodes.isNotEmpty) {
                     final raw = barcodes.first.rawValue ?? "";
                     final ok = game.loadActiveProject(raw);
+                    _scannerController?.dispose();
+                    _scannerController = null;
                     Navigator.pop(ctx);
                     if (!ok) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -118,11 +137,26 @@ class _StaffScreenState extends State<StaffScreen> {
                       style: TextStyle(color: Color(0xFFF0E6D2))),
                 ),
               ),
+              Positioned(
+                top: 16,
+                right: 16,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () {
+                    _scannerController?.dispose();
+                    _scannerController = null;
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ),
             ],
           ),
         ),
       ),
-    );
+    ).then((_) {
+      _scannerController?.dispose();
+      _scannerController = null;
+    });
   }
 
   @override

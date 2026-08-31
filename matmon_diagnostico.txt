@@ -1,0 +1,484 @@
+### FLUTTER VERSION ###
+Flutter 3.44.9 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 6b182d2c75 (9 days ago) • 2026-08-05 10:04:07 -0700
+Engine • hash b9499e4c25212536ba3a4eec4f5c1905fb3214fe (revision 5a2a6a42cc) (13 days ago) • 2026-07-31 18:31:59.000Z
+Tools • Dart 3.12.2 • DevTools 2.57.0
+
+### FLUTTER DOCTOR -v ###
+[✓] Flutter (Channel stable, 3.44.9, on Pop!_OS 22.04 LTS 7.0.11-76070011-generic, locale pt_BR.UTF-8) [169ms]
+    • Flutter version 3.44.9 on channel stable at /home/tiagorabelo/snap/flutter/common/flutter
+    • Upstream repository https://github.com/flutter/flutter.git
+    • Framework revision 6b182d2c75 (9 days ago), 2026-08-05 10:04:07 -0700
+    • Engine revision 5a2a6a42cc
+    • Dart version 3.12.2
+    • DevTools version 2.57.0
+    • Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, enable-swift-package-manager, omit-legacy-version-file, enable-lldb-debugging, enable-uiscene-migration
+
+[!] Android toolchain - develop for Android devices (Android SDK version 36.1.0) [17,2s]
+    • Android SDK at /home/tiagorabelo/Android/Sdk
+    • Emulator version 36.4.9.0 (build_id 14788078) (CL:N/A)
+    • Platform android-36, build-tools 36.1.0
+    • ANDROID_HOME = /home/tiagorabelo/Android/Sdk
+    • Java binary at: /usr/bin/java
+      This JDK was found in the system PATH.
+      To manually set the JDK path, use: `flutter config --jdk-dir="path/to/jdk"`.
+    • Java version OpenJDK Runtime Environment (build 17.0.19+10-1-22.04.2-Ubuntu)
+    ✗ Android license status unknown.
+      Run `flutter doctor --android-licenses` to accept the SDK licenses.
+      See https://flutter.dev/to/linux-android-setup for more details.
+
+[✓] Chrome - develop for the web [10ms]
+    • Chrome at google-chrome
+
+[✓] Linux toolchain - develop for Linux desktop [16,0s]
+    • Ubuntu clang version 14.0.0-1ubuntu1.1
+    • cmake version 3.22.1
+    • ninja version 1.10.1
+    • pkg-config version 0.29.2
+    • GL_EXT_framebuffer_blit: no
+    • GL_EXT_texture_format_BGRA8888: no
+
+[✓] Connected device (2 available) [12,1s]
+    • Linux (desktop) • linux  • linux-x64      • Pop!_OS 22.04 LTS 7.0.11-76070011-generic
+    • Chrome (web)    • chrome • web-javascript • Google Chrome 151.0.7922.108
+
+[✓] Network resources [5,1s]
+    • All expected network resources are available.
+
+! Doctor found issues in 1 category.
+
+### DART VERSION ###
+Dart SDK version: 3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on "linux_x64"
+
+### JAVA VERSION ###
+openjdk version "17.0.19" 2026-04-21
+OpenJDK Runtime Environment (build 17.0.19+10-1-22.04.2-Ubuntu)
+OpenJDK 64-Bit Server VM (build 17.0.19+10-1-22.04.2-Ubuntu, mixed mode, sharing)
+
+### PUBSPEC.YAML ###
+name: matmon
+description: "Caça ao Tesouro Bíblico Offline"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  provider: ^6.1.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.2.3
+  crypto: ^3.0.3
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+### ANDROID build.gradle (raiz) ###
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(newBuildDir)
+
+subprojects {
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
+}
+
+### ANDROID app/build.gradle ###
+plugins {
+    id("com.android.application")
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
+android {
+    namespace = "com.example.matmon"
+    compileSdk = 35
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        applicationId = "com.example.matmon"
+        minSdk = flutter.minSdkVersion
+        targetSdk = 35
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+### GRADLE WRAPPER PROPERTIES ###
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-9.1.0-all.zip
+
+### WORKFLOW GITHUB ACTIONS ###
+name: Flutter Build APK
+on:
+  push:
+    branches: [ principal, main ] # Funciona em ambas agora
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Atualizado para v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - name: Upload APK
+        uses: actions/upload-artifact@v4 # Atualizado para v4
+        with:
+          name: matmon-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+### GIT STATUS ###
+No ramo principal
+Seu ramo está à frente de 'origin/main' por 17 submissões.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (utilize "git add <arquivo>..." para atualizar o que será submetido)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   android/app/build.gradle.kts
+
+Arquivos não monitorados:
+  (utilize "git add <arquivo>..." para incluir o que será submetido)
+	matmon_diagnostico.txt
+
+nenhuma modificação adicionada à submissão (utilize "git add" e/ou "git commit -a")
+
+### GIT REMOTE ###
+origin	https://github.com/HonoravelMacho/matmon.git (fetch)
+origin	https://github.com/HonoravelMacho/matmon.git (push)
+
+### FLUTTER PUB OUTDATED ###
+Showing outdated packages.
+[*] indicates versions that are not the latest available.
+
+Package Name              Current   Upgradable  Resolvable  Latest   
+
+direct dependencies:     
+intl                      *0.19.0   *0.19.0     0.20.3      0.20.3   
+mobile_scanner            *5.2.3    *5.2.3      7.4.0       7.4.0    
+
+dev_dependencies:        
+flutter_lints             *3.0.2    *3.0.2      6.0.0       6.0.0    
+
+transitive dependencies: 
+hooks                     *2.0.2    *2.0.2      *2.0.2      2.1.0    
+material_color_utilities  *0.13.0   *0.13.0     *0.13.0     0.13.1   
+meta                      *1.18.0   *1.18.0     *1.18.0     1.19.0   
+qr                        *3.0.2    *3.0.2      *3.0.2      4.0.0    
+record_use                *0.6.0    *0.6.0      *0.6.0      1.1.0    
+vector_math               *2.2.0    *2.2.0      *2.2.0      2.4.2    
+
+transitive dev_dependencies:
+lints                     *3.0.0    *3.0.0      6.1.0       6.1.0    
+matcher                   *0.12.19  *0.12.19    *0.12.19    0.12.20  
+test_api                  *0.7.11   *0.7.11     *0.7.11     0.7.13   
+
+4  dependencies are constrained to versions that are older than a resolvable version.
+To update these dependencies, edit pubspec.yaml, or run `flutter pub upgrade --major-versions`.
+
+### FLUTTER ANALYZE ###
+Analyzing matmon...                                             
+
+   info • The private field _savedProjects could be 'final'. Try making the field 'final' • lib/presentation/providers/game_provider.dart:10:17 • prefer_final_fields
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/presentation/providers/game_provider.dart:53:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/presentation/providers/game_provider.dart:76:7 • avoid_print
+   info • Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor • lib/presentation/screens/home_screen.dart:6:7 • use_key_in_widget_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/home_screen.dart:10:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/home_screen.dart:12:18 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/home_screen.dart:34:35 • prefer_const_constructors
+   info • Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor • lib/presentation/screens/hunter_screen.dart:7:7 • use_key_in_widget_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:19:18 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:23:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:24:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:27:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:28:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:30:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:31:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:34:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:37:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:47:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:52:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:53:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:54:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:55:13 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/presentation/screens/hunter_screen.dart:62:40 • use_build_context_synchronously
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:63:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:63:39 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:67:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:82:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:83:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:84:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:84:39 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:85:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:86:24 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:87:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:88:53 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:95:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:109:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:110:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:110:48 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:111:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:114:22 • prefer_const_constructors
+   info • Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container' • lib/presentation/screens/hunter_screen.dart:126:25 • sized_box_for_whitespace
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:146:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:147:58 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/hunter_screen.dart:152:21 • prefer_const_constructors
+   info • Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor • lib/presentation/screens/organizer_screen.dart:7:7 • use_key_in_widget_constructors
+   info • Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private • lib/presentation/screens/organizer_screen.dart:9:3 • library_private_types_in_public_api
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:20:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:23:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:28:19 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:30:50 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:33:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:51:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:55:57 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:56:57 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:60:66 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/organizer_screen.dart:68:20 • prefer_const_constructors
+   info • Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor • lib/presentation/screens/project_detail_screen.dart:10:3 • use_key_in_widget_constructors
+   info • Constructors in '@immutable' classes should be declared as 'const'. Try adding 'const' to the constructor declaration • lib/presentation/screens/project_detail_screen.dart:10:3 • prefer_const_constructors_in_immutables
+   info • Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private • lib/presentation/screens/project_detail_screen.dart:13:3 • library_private_types_in_public_api
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:27:19 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:32:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:32:35 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:45:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:55:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:56:15 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:69:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:73:56 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:74:58 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:78:66 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/project_detail_screen.dart:91:20 • prefer_const_constructors
+   info • Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor • lib/presentation/screens/staff_screen.dart:8:7 • use_key_in_widget_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:16:16 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:26:28 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:29:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:30:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:31:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:34:32 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:36:23 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:45:32 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:53:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:54:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:54:51 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:55:58 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:56:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:58:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:59:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:59:53 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:60:21 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:62:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:65:68 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:65:86 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:67:30 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:71:30 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • lib/presentation/screens/staff_screen.dart:71:67 • prefer_const_constructors
+   info • Constructors for public widgets should have a named 'key' parameter. Try adding a named parameter to the constructor • lib/presentation/widgets/menu_card.dart:4:3 • use_key_in_widget_constructors
+   info • Constructors in '@immutable' classes should be declared as 'const'. Try adding 'const' to the constructor declaration • lib/presentation/widgets/menu_card.dart:4:3 • prefer_const_constructors_in_immutables
+  error • The name 'MyApp' isn't a class. Try correcting the name to match an existing class • test/widget_test.dart:16:35 • creation_with_non_type
+
+97 issues found. (ran in 9.9s)
+
+### BUILD APK DEBUG (log completo) ###
+[        ] 	at org.gradle.launcher.exec.RunAsWorkerThreadBuildActionExecutor.execute(RunAsWorkerThreadBuildActionExecutor.java:36)
+[        ] 	at org.gradle.tooling.internal.provider.continuous.ContinuousBuildActionExecutor.execute(ContinuousBuildActionExecutor.java:110)
+[        ] 	at org.gradle.tooling.internal.provider.SubscribableBuildActionExecutor.execute(SubscribableBuildActionExecutor.java:64)
+[        ] 	at org.gradle.internal.session.DefaultBuildSessionContext.execute(DefaultBuildSessionContext.java:46)
+[        ] 	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:92)
+[        ] 	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:80)
+[        ] 	at org.gradle.internal.session.BuildSessionState.run(BuildSessionState.java:73)
+[        ] 	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:62)
+[        ] 	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:41)
+[        ] 	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:57)
+[        ] 	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:32)
+[        ] 	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:51)
+[        ] 	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:39)
+[        ] 	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:47)
+[        ] 	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:31)
+[        ] 	at org.gradle.launcher.daemon.server.exec.ExecuteBuild.doBuild(ExecuteBuild.java:70)
+[        ] 	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.WatchForDisconnection.execute(WatchForDisconnection.java:39)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.ResetDeprecationLogger.execute(ResetDeprecationLogger.java:29)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.RequestStopIfSingleUsedDaemon.execute(RequestStopIfSingleUsedDaemon.java:35)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.lambda$execute$0(ForwardClientInput.java:40)
+[        ] 	at org.gradle.internal.daemon.clientinput.ClientInputForwarder.forwardInput(ClientInputForwarder.java:80)
+[        ] 	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.execute(ForwardClientInput.java:37)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.LogAndCheckHealth.execute(LogAndCheckHealth.java:64)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.LogToClient.doBuild(LogToClient.java:63)
+[        ] 	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.EstablishBuildEnvironment.doBuild(EstablishBuildEnvironment.java:84)
+[        ] 	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
+[        ] 	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
+[        ] 	at org.gradle.launcher.daemon.server.exec.StartBuildOrRespondWithBusy$1.run(StartBuildOrRespondWithBusy.java:52)
+[        ] 	at org.gradle.launcher.daemon.server.DaemonStateCoordinator.lambda$runCommand$0(DaemonStateCoordinator.java:321)
+[        ] 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+[        ] 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+[   +1 ms] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+[        ] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+[        ] 	at java.base/java.lang.Thread.run(Thread.java:840)
+[        ] Caused by: java.lang.RuntimeException: com.android.builder.errors.EvalIssueException: [CXX1101] NDK at /home/tiagorabelo/Android/Sdk/ndk/28.2.13676358 did not have a source.properties file
+[        ] 	at com.android.builder.profile.ThreadRecorder.record(ThreadRecorder.java:71)
+[        ] 	at com.android.builder.profile.ThreadRecorder.record(ThreadRecorder.java:54)
+[        ] 	at com.android.build.gradle.internal.profile.AnalyticsResourceManager.recordBlockAtConfiguration(AnalyticsResourceManager.kt:222)
+[        ] 	at com.android.build.gradle.internal.profile.AnalyticsConfiguratorService.recordBlock(AnalyticsConfiguratorService.kt:111)
+[        ] 	at com.android.build.gradle.internal.plugins.BasePlugin$createTasks$2.accept(BasePlugin.kt:596)
+[        ] 	at com.android.build.gradle.internal.plugins.BasePlugin$createTasks$2.accept(BasePlugin.kt:593)
+[        ] 	at com.android.build.gradle.internal.crash.CrashReporting$afterEvaluate$1.execute(crash_reporting.kt:37)
+[        ] 	at com.android.build.gradle.internal.crash.CrashReporting$afterEvaluate$1.execute(crash_reporting.kt:35)
+[        ] 	at org.gradle.internal.code.DefaultUserCodeApplicationContext$CurrentApplication$1.execute(DefaultUserCodeApplicationContext.java:124)
+[        ] 	at org.gradle.configuration.internal.DefaultListenerBuildOperationDecorator$BuildOperationEmittingAction$1.run(DefaultListenerBuildOperationDecorator.java:173)
+[        ] 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
+[        ] 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
+[        ] 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+[        ] 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+[        ] 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+[        ] 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+[        ] 	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
+[        ] 	at org.gradle.configuration.internal.DefaultListenerBuildOperationDecorator$BuildOperationEmittingAction.execute(DefaultListenerBuildOperationDecorator.java:170)
+[        ] 	at org.gradle.internal.event.BroadcastDispatch$ActionInvocationHandler.dispatch(BroadcastDispatch.java:101)
+[        ] 	at org.gradle.internal.event.BroadcastDispatch$ActionInvocationHandler.dispatch(BroadcastDispatch.java:89)
+[        ] 	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:44)
+[        ] 	at org.gradle.internal.event.BroadcastDispatch$SingletonDispatch.dispatch(BroadcastDispatch.java:270)
+[        ] 	at org.gradle.internal.event.BroadcastDispatch$SingletonDispatch.dispatch(BroadcastDispatch.java:172)
+[        ] 	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:84)
+[        ] 	at org.gradle.internal.event.AbstractBroadcastDispatch.dispatch(AbstractBroadcastDispatch.java:70)
+[        ] 	at org.gradle.internal.event.BroadcastDispatch$CompositeDispatch.dispatch(BroadcastDispatch.java:382)
+[        ] 	at org.gradle.internal.event.BroadcastDispatch$CompositeDispatch.dispatch(BroadcastDispatch.java:274)
+[        ] 	at org.gradle.internal.event.ListenerBroadcast.dispatch(ListenerBroadcast.java:160)
+[        ] 	at org.gradle.internal.event.ListenerBroadcast.dispatch(ListenerBroadcast.java:37)
+[        ] 	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+[        ] 	at jdk.proxy1/jdk.proxy1.$Proxy67.afterEvaluate(Unknown Source)
+[        ] 	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate$1.execute(LifecycleProjectEvaluator.java:247)
+[        ] 	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate$1.execute(LifecycleProjectEvaluator.java:244)
+[        ] 	at org.gradle.api.internal.project.DefaultProject.stepEvaluationListener(DefaultProject.java:1584)
+[        ] 	at org.gradle.configuration.project.LifecycleProjectEvaluator$NotifyAfterEvaluate.run(LifecycleProjectEvaluator.java:253)
+[        ] 	... 233 more
+[        ] Caused by: com.android.builder.errors.EvalIssueException: [CXX1101] NDK at /home/tiagorabelo/Android/Sdk/ndk/28.2.13676358 did not have a source.properties file
+[        ] 	at com.android.builder.errors.IssueReporter.reportError(IssueReporter.kt:119)
+[        ] 	at com.android.builder.errors.IssueReporter.reportError$default(IssueReporter.kt:114)
+[        ] 	at com.android.build.gradle.internal.cxx.logging.IssueReporterLoggingEnvironment.log(IssueReporterLoggingEnvironment.kt:113)
+[        ] 	at com.android.build.gradle.internal.cxx.logging.ThreadLoggingEnvironment$Companion.reportFormattedErrorToCurrentLogger(LoggingEnvironment.kt:230)
+[        ] 	at com.android.build.gradle.internal.cxx.logging.LoggingEnvironmentKt.errorln(LoggingEnvironment.kt:62)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.NdkLocatorKt.getNdkVersionInfo(NdkLocator.kt:362)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.NdkLocator$findNdkPath$1.invoke(NdkLocator.kt:431)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.NdkLocator$findNdkPath$1.invoke(NdkLocator.kt:431)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.NdkLocatorKt.getNdkFolderParsedRevision(NdkLocator.kt:268)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.NdkLocatorKt.findNdkPathImpl$getNdkFolderRevision(NdkLocator.kt:87)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.NdkLocatorKt.findNdkPathImpl(NdkLocator.kt:223)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.NdkLocator.findNdkPath(NdkLocator.kt:425)
+[        ] 	at com.android.build.gradle.internal.ndk.NdkHandler.getNdkStatus(NdkHandler.kt:83)
+[        ] 	at com.android.build.gradle.internal.ndk.NdkHandler.getNdkPlatform(NdkHandler.kt:96)
+[        ] 	at com.android.build.gradle.internal.cxx.gradle.generator.CxxConfigurationModelKt.tryCreateConfigurationParameters(CxxConfigurationModel.kt:213)
+[        ] 	at com.android.build.gradle.internal.cxx.configure.CxxCreateGradleTasksKt.createCxxTasks(CxxCreateGradleTasks.kt:89)
+[        ] 	at com.android.build.gradle.internal.VariantTaskManager.createTopLevelTasks(VariantTaskManager.kt:229)
+[        ] 	at com.android.build.gradle.internal.VariantTaskManager.createTasks(VariantTaskManager.kt:146)
+[        ] 	at com.android.build.gradle.internal.plugins.BasePlugin.createAndroidTasks(BasePlugin.kt:755)
+[        ] 	at com.android.build.gradle.internal.plugins.BasePlugin$createTasks$2$1.call(BasePlugin.kt:601)
+[        ] 	at com.android.builder.profile.ThreadRecorder.record(ThreadRecorder.java:69)
+[        ] 	... 267 more
+[        ] BUILD FAILED in 6s
+[   +1 ms] 4 actionable tasks: 4 up-to-date
+[  +28 ms] Running Gradle task 'assembleDebug'... (completed in 6,8s)
+[   +8 ms] 
+           ┌─ Flutter Fix ───────────────────────────────────────────────────────────────┐
+           │     [!] This is likely due to a malformed download of the NDK.              │
+           │     This can be fixed by deleting the local NDK copy at:                    │
+           │     /home/tiagorabelo/Android/Sdk/ndk/28.2.13676358                         │
+           │     and allowing the Android Gradle Plugin to automatically re-download it. │
+           │                                                                             │
+           └─────────────────────────────────────────────────────────────────────────────┘
+
+[   +5 ms] "flutter apk" took 7.473ms.
+[  +26 ms] Gradle task assembleDebug failed with exit code 1
+[        ] 
+           #0      throwToolExit (package:flutter_tools/src/base/common.dart:34:3)
+           #1      AndroidGradleBuilder.buildGradleApp (package:flutter_tools/src/android/gradle.dart:595:7)
+           <asynchronous suspension>
+           #2      AndroidGradleBuilder.buildApk (package:flutter_tools/src/android/gradle.dart:236:5)
+           <asynchronous suspension>
+           #3      BuildApkCommand.runCommand (package:flutter_tools/src/commands/build_apk.dart:132:5)
+           <asynchronous suspension>
+           #4      FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1630:27)
+           <asynchronous suspension>
+           #5      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #6      CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+           <asynchronous suspension>
+           #7      FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
+           <asynchronous suspension>
+           #8      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #9      FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+           <asynchronous suspension>
+           #10     FlutterCommandRunner.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:307:33)
+           <asynchronous suspension>
+           #11     run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+           <asynchronous suspension>
+           #12     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #13     main (package:flutter_tools/executable.dart:103:3)
+           <asynchronous suspension>
+
+
+[        ] Running 1 shutdown hook
+[   +2 ms] Shutdown hooks complete
+[ +119 ms] exiting with code 1
