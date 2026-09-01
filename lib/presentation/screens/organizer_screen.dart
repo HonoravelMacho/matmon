@@ -53,35 +53,36 @@ class _OrganizerScreenState extends State<OrganizerScreen> {
                     ),
                     title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text("${p.teamCount} Equipes | ${p.clues.length} Pistas"),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                      onPressed: () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text("Excluir \"${p.name}\"?"),
-                            content: const Text(
-                                "Esta ação é permanente e apaga todas as pistas salvas."),
-                            actions: [
-                              TextButton(
-                                  onPressed: () => Navigator.pop(ctx, false),
-                                  child: const Text("Cancelar")),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.redAccent),
-                                onPressed: () => Navigator.pop(ctx, true),
-                                child: const Text("Excluir",
-                                    style: TextStyle(color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true) {
-                          if (!context.mounted) return;
-                          Provider.of<GameProvider>(context, listen: false)
-                              .deleteProject(i);
+                    trailing: PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'edit':
+                            _showEditProject(context, i, p);
+                            break;
+                          case 'delete':
+                            _confirmDelete(context, i, p.name);
+                            break;
                         }
                       },
+                      itemBuilder: (ctx) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: ListTile(
+                            leading: Icon(Icons.edit),
+                            title: Text('Editar Projeto'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: ListTile(
+                            leading: Icon(Icons.delete, color: Colors.redAccent),
+                            title: Text('Excluir', style: TextStyle(color: Colors.redAccent)),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
                     ),
                     onTap: () => Navigator.push(
                       context,
@@ -139,5 +140,89 @@ class _OrganizerScreenState extends State<OrganizerScreen> {
         ],
       ),
     );
+  }
+
+  void _showEditProject(BuildContext context, int index, Project project) {
+    final nameCtrl = TextEditingController(text: project.name);
+    final teamCtrl = TextEditingController(text: project.teamCount.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Editar Projeto"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration:
+                  const InputDecoration(labelText: "Nome do Evento"),
+            ),
+            TextField(
+              controller: teamCtrl,
+              decoration:
+                  const InputDecoration(labelText: "Nº de Equipes", hintText: "Ex: 4"),
+              keyboardType: TextInputType.number,
+              maxLength: 2,
+            ),
+            if (project.clues.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  "Atenção: Alterar o nº de equipes pode afetar pistas existentes.",
+                  style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              final teams = int.tryParse(teamCtrl.text) ?? 0;
+              if (name.isEmpty || teams < 1 || teams > 20) return;
+
+              final updatedProject = Project(
+                id: project.id,
+                name: name,
+                teamCount: teams,
+                clues: project.clues,
+              );
+              Provider.of<GameProvider>(context, listen: false)
+                  .updateProject(index, updatedProject);
+              Navigator.pop(ctx);
+            },
+            child: const Text("Salvar"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, int index, String name) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Excluir \"$name\"?"),
+        content: const Text(
+            "Esta ação é permanente e apaga todas as pistas salvas."),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text("Cancelar")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Excluir", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      Provider.of<GameProvider>(context, listen: false).deleteProject(index);
+    }
   }
 }

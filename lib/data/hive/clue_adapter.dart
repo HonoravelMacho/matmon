@@ -10,18 +10,28 @@ class ClueAdapter extends TypeAdapter<Clue> {
   Clue read(BinaryReader reader) {
     final id = reader.readString();
     final keyword = reader.readString();
-    final verseCount = reader.readInt();
-    final verses = List.generate(verseCount, (_) => reader.readString());
-    return Clue(id: id, keyword: keyword, verses: verses);
+    final teamCount = reader.readInt();
+    final versesByTeam = <int, List<String>>{};
+    for (int i = 0; i < teamCount; i++) {
+      final teamNumber = reader.readInt();
+      final verseCount = reader.readInt();
+      final verses = List.generate(verseCount, (_) => reader.readString());
+      versesByTeam[teamNumber] = verses;
+    }
+    return Clue(id: id, keyword: keyword, versesByTeam: versesByTeam);
   }
 
   @override
   void write(BinaryWriter writer, Clue obj) {
     writer.writeString(obj.id);
     writer.writeString(obj.keyword);
-    writer.writeInt(obj.verses.length);
-    for (final verse in obj.verses) {
-      writer.writeString(verse);
-    }
+    writer.writeInt(obj.versesByTeam.length);
+    obj.versesByTeam.forEach((teamNumber, verses) {
+      writer.writeInt(teamNumber);
+      writer.writeInt(verses.length);
+      for (final verse in verses) {
+        writer.writeString(verse);
+      }
+    });
   }
 }

@@ -125,8 +125,9 @@ class GameProvider with ChangeNotifier {
       // Ex.: 4 equipes e 2 versículos -> equipes 1,3 veem o 1º; equipes 2,4 veem o 2º.
       List<Map<String, String>> route = [];
       for (var clue in shuffledClues) {
-        if (clue.verses.isEmpty) continue;
-        final selectedVerse = clue.verses[(teamNumber - 1) % clue.verses.length];
+        final teamVerses = clue.versesForTeam(teamNumber);
+        if (teamVerses.isEmpty) continue;
+        final selectedVerse = teamVerses[(teamNumber - 1) % teamVerses.length];
         route.add({'v': selectedVerse, 'k': clue.keyword});
       }
 

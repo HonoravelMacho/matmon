@@ -23,6 +23,7 @@ class _StaffScreenState extends State<StaffScreen> with WidgetsBindingObserver {
   int _secondsLeft = CryptoUtil.periodSeconds;
   Timer? _timer;
   MobileScannerController? _scannerController;
+  bool _scanning = false;
 
   @override
   void initState() {
@@ -84,7 +85,12 @@ class _StaffScreenState extends State<StaffScreen> with WidgetsBindingObserver {
   }
 
   void _scanProject(BuildContext context, GameProvider game) {
-    _scannerController = MobileScannerController();
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+    _scanning = true;
 
     showModalBottomSheet(
       context: context,
@@ -100,17 +106,21 @@ class _StaffScreenState extends State<StaffScreen> with WidgetsBindingObserver {
               MobileScanner(
                 controller: _scannerController,
                 onDetect: (capture) {
+                  if (!_scanning) return;
                   final barcodes = capture.barcodes;
                   if (barcodes.isNotEmpty) {
                     final raw = barcodes.first.rawValue ?? "";
-                    final ok = game.loadActiveProject(raw);
-                    _scannerController?.dispose();
-                    _scannerController = null;
-                    Navigator.pop(ctx);
-                    if (!ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("QR não é um mapa válido!")),
-                      );
+                    if (raw.isNotEmpty) {
+                      _scanning = false;
+                      final ok = game.loadActiveProject(raw);
+                      _scannerController?.dispose();
+                      _scannerController = null;
+                      if (mounted) Navigator.pop(ctx);
+                      if (!ok) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("QR não é um mapa válido!")),
+                        );
+                      }
                     }
                   }
                 },
@@ -143,6 +153,7 @@ class _StaffScreenState extends State<StaffScreen> with WidgetsBindingObserver {
                 child: IconButton(
                   icon: const Icon(Icons.close, color: Colors.white),
                   onPressed: () {
+                    _scanning = false;
                     _scannerController?.dispose();
                     _scannerController = null;
                     Navigator.pop(ctx);
@@ -154,6 +165,7 @@ class _StaffScreenState extends State<StaffScreen> with WidgetsBindingObserver {
         ),
       ),
     ).then((_) {
+      _scanning = false;
       _scannerController?.dispose();
       _scannerController = null;
     });

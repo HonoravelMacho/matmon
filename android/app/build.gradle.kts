@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.matmon"
-    compileSdk = 35
+    compileSdk = 37
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -16,7 +16,7 @@ android {
     defaultConfig {
         applicationId = "com.example.matmon"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
+        targetSdk = 37
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

@@ -17,6 +17,7 @@ class HunterScreen extends StatefulWidget {
 
 class _HunterScreenState extends State<HunterScreen> {
   MobileScannerController? _scannerController;
+  bool _scanning = false;
 
   @override
   void dispose() {
@@ -38,7 +39,12 @@ class _HunterScreenState extends State<HunterScreen> {
   }
 
   void _openScanner(BuildContext context, GameProvider game) {
-    _scannerController = MobileScannerController();
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+    _scanning = true;
     
     showModalBottomSheet(
       context: context,
@@ -54,11 +60,15 @@ class _HunterScreenState extends State<HunterScreen> {
               MobileScanner(
                 controller: _scannerController,
                 onDetect: (capture) {
+                  if (!_scanning) return;
                   final barcodes = capture.barcodes;
                   if (barcodes.isNotEmpty) {
                     final code = barcodes.first.rawValue ?? "";
-                    game.validateQr(code);
-                    Navigator.pop(ctx);
+                    if (code.isNotEmpty) {
+                      _scanning = false;
+                      game.validateQr(code);
+                      if (mounted) Navigator.pop(ctx);
+                    }
                   }
                 },
               ),
@@ -80,7 +90,10 @@ class _HunterScreenState extends State<HunterScreen> {
                   backgroundColor: Colors.black54,
                   child: IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(ctx),
+                    onPressed: () {
+                      _scanning = false;
+                      Navigator.pop(ctx);
+                    },
                   ),
                 ),
               ),
@@ -101,6 +114,7 @@ class _HunterScreenState extends State<HunterScreen> {
         ),
       ),
     ).then((_) {
+      _scanning = false;
       _scannerController?.dispose();
       _scannerController = null;
     });

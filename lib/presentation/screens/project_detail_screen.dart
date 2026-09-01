@@ -37,9 +37,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         title: Text(project.name),
         actions: [
           IconButton(
+            tooltip: "Editar Projeto",
+            icon: const Icon(Icons.edit),
+            onPressed: () => _showEditProject(context, provider, project),
+          ),
+          IconButton(
             tooltip: "Mostrar QR para o Staff",
             icon: const Icon(Icons.qr_code_2),
             onPressed: () => _showMapQr(context, provider, project),
+          ),
+          IconButton(
+            tooltip: "Baixar todos os QRs",
+            icon: const Icon(Icons.download_for_offline),
+            onPressed: () => _downloadAllQrs(context, project),
           ),
           IconButton(
             icon: const Icon(Icons.share),
@@ -133,6 +143,65 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         label: const Text("Nova Pista"),
         icon: const Icon(Icons.add),
         onPressed: () => _showAddClueDialog(context, provider, project),
+      ),
+    );
+  }
+
+  void _showEditProject(BuildContext context, GameProvider provider, Project project) {
+    final nameCtrl = TextEditingController(text: project.name);
+    final teamCtrl = TextEditingController(text: project.teamCount.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Editar Projeto"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration:
+                  const InputDecoration(labelText: "Nome do Evento"),
+            ),
+            TextField(
+              controller: teamCtrl,
+              decoration:
+                  const InputDecoration(labelText: "Nº de Equipes", hintText: "Ex: 4"),
+              keyboardType: TextInputType.number,
+              maxLength: 2,
+            ),
+            if (project.clues.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  "Atenção: Alterar o nº de equipes pode afetar pistas existentes.",
+                  style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              final teams = int.tryParse(teamCtrl.text) ?? 0;
+              if (name.isEmpty || teams < 1 || teams > 20) return;
+
+              final updatedProject = Project(
+                id: project.id,
+                name: name,
+                teamCount: teams,
+                clues: project.clues,
+              );
+              provider.updateProject(widget.projectIndex, updatedProject);
+              Navigator.pop(ctx);
+            },
+            child: const Text("Salvar"),
+          ),
+        ],
       ),
     );
   }
@@ -248,6 +317,55 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
+  Future<void> _downloadAllQrs(BuildContext context, Project project) async {
+    if (project.clues.isEmpty) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Baixando QRs..."),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("Gerando QR codes de todas as pistas..."),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      int downloaded = 0;
+      for (final clue in project.clues) {
+        for (final teamNum in clue.teamNumbers) {
+          final verses = clue.versesForTeam(teamNum);
+          for (int verseIndex = 0; verseIndex < verses.length; verseIndex++) {
+            final cipher = CryptoUtil.toAlphanumeric(clue.keyword);
+            final qrData = "$cipher|$teamNum|$verseIndex";
+            await _downloadQrImage(context, qrData, clue.keyword, teamNum, verseIndex);
+            downloaded++;
+          }
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("$downloaded QR codes baixados com sucesso!")),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erro ao baixar QRs: $e")),
+        );
+      }
+    }
+  }
+
   Future<void> _downloadQrImage(BuildContext context, String data, String keyword, int teamNum, int verseIndex) async {
     try {
       final qrPainter = QrPainter(data: data, version: QrVersions.auto, gapless: true);
@@ -263,19 +381,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         if (directory != null) {
           final file = File('${directory.path}/matmon_${keyword}_eq${teamNum}_v${verseIndex + 1}.png');
           await file.writeAsBytes(byteData.buffer.asUint8List());
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("QR salvo em: ${file.path}")),
-            );
-          }
         }
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro ao salvar QR: $e")),
-        );
-      }
+      // Silenciosamente ignora erros individuais no download em lote
     }
   }
 

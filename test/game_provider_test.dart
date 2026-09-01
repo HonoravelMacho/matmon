@@ -15,9 +15,9 @@ void main() {
       name: 'Acampamento Teste',
       teamCount: 4,
       clues: [
-        Clue(keyword: 'PAO', verses: ['João 6:35', 'Êxodo 16:4']),
-        Clue(keyword: 'AGUA', verses: ['João 4:14', 'Números 20:11']),
-        Clue(keyword: 'LUZ', verses: ['João 8:12']),
+        Clue(keyword: 'PAO', versesByTeam: {1: ['João 6:35'], 2: ['Êxodo 16:4'], 3: ['João 6:35'], 4: ['Êxodo 16:4']}),
+        Clue(keyword: 'AGUA', versesByTeam: {1: ['João 4:14'], 2: ['Números 20:11'], 3: ['João 4:14'], 4: ['Números 20:11']}),
+        Clue(keyword: 'LUZ', versesByTeam: {1: ['João 8:12'], 2: ['João 8:12'], 3: ['João 8:12'], 4: ['João 8:12']}),
       ],
     );
   }
@@ -136,12 +136,12 @@ void main() {
       expect(restored.teamCount, original.teamCount);
       expect(restored.clues.length, original.clues.length);
       expect(restored.clues[0].keyword, 'PAO');
-      expect(restored.clues[0].verses, ['João 6:35', 'Êxodo 16:4']);
+      expect(restored.clues[0].versesForTeam(1), ['João 6:35']);
     });
 
     test('IDs são únicos entre instâncias', () {
-      final a = Clue(keyword: 'A', verses: ['x']);
-      final b = Clue(keyword: 'B', verses: ['y']);
+      final a = Clue(keyword: 'A', versesByTeam: {1: ['x']});
+      final b = Clue(keyword: 'B', versesByTeam: {1: ['y']});
       expect(a.id, isNot(b.id));
     });
   });
