@@ -3,13 +3,14 @@ name: Build APK
 on:
   push:
     branches: [ "main", "principal" ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ "main", "principal" ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
@@ -26,14 +27,73 @@ jobs:
           flutter-version: '3.24.0'
           channel: 'stable'
 
+      - name: Patch flutter.groovy (fix Groovy 4.x compat)
+        run: |
+          FLUTTER_GROOVY="$FLUTTER_ROOT/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy"
+          if [ -f "$FLUTTER_GROOVY" ]; then
+            # Fix QName import (Groovy 4.x)
+            sed -i 's/import groovy.xml.QName/import javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+            # Fix XmlParser import (Groovy 4.x)
+            sed -i 's/import groovy.xml.XmlParser/import groovy.xml.XmlParser/g' "$FLUTTER_GROOVY"
+            if ! grep -q "import groovy.xml.XmlParser" "$FLUTTER_GROOVY"; then
+              sed -i '/^import /a import groovy.xml.XmlParser' "$FLUTTER_GROOVY"
+            fi
+            # Fix XmlSlurper import (Groovy 4.x)
+            if ! grep -q "import groovy.xml.XmlSlurper" "$FLUTTER_GROOVY"; then
+              sed -i '/^import /a import groovy.xml.XmlSlurper' "$FLUTTER_GROOVY"
+            fi
+            # Fix StreamingMarkupBuilder import (Groovy 4.x)
+            if ! grep -q "import groovy.xml.StreamingMarkupBuilder" "$FLUTTER_GROOVY"; then
+              sed -i '/^import /a import groovy.xml.StreamingMarkupBuilder' "$FLUTTER_GROOVY"
+            fi
+            echo "Patched $FLUTTER_GROOVY"
+          else
+            echo "File not found: $FLUTTER_GROOVY"
+            exit 1
+          fi
+
+      - name: Patch flutter.gradle (fix proguard-android.txt -> proguard-android-optimize.txt)
+        run: |
+          FLUTTER_GRADLE="$FLUTTER_ROOT/packages/flutter_tools/gradle/flutter.gradle"
+          if [ -f "$FLUTTER_GRADLE" ]; then
+            # Replace any occurrence of proguard-android.txt with proguard-android-optimize.txt
+            sed -i 's/proguard-android\.txt/proguard-android-optimize.txt/g' "$FLUTTER_GRADLE"
+            echo "Patched $FLUTTER_GRADLE"
+          else
+            echo "File not found: $FLUTTER_GRADLE"
+            exit 1
+          fi
+
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release --split-per-abi
+      - name: Build APK (Universal)
+        run: flutter build apk --release
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: matmon-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download APK Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: matmon-apk
+          path: .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app-release.apk
+          generate_release_notes: true
+          draft: false
+          prerelease: false
