@@ -56,8 +56,15 @@ jobs:
         run: |
           FLUTTER_GRADLE="$FLUTTER_ROOT/packages/flutter_tools/gradle/flutter.gradle"
           if [ -f "$FLUTTER_GRADLE" ]; then
+            echo "=== ANTES DO PATCH ==="
+            grep -n "proguard-android" "$FLUTTER_GRADLE" || echo "NÃO ENCONTRADO proguard-android"
             # Replace any occurrence of proguard-android.txt with proguard-android-optimize.txt
             sed -i 's/proguard-android\.txt/proguard-android-optimize.txt/g' "$FLUTTER_GRADLE"
+            # Also catch the full getDefaultProguardFile call
+            sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GRADLE"
+            sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GRADLE"
+            echo "=== DEPOIS DO PATCH ==="
+            grep -n "proguard-android" "$FLUTTER_GRADLE" || echo "NÃO ENCONTRADO (patch OK)"
             echo "Patched $FLUTTER_GRADLE"
           else
             echo "File not found: $FLUTTER_GRADLE"
