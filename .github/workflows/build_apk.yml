@@ -24,7 +24,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.27.1'
           channel: 'stable'
 
       - name: Patch flutter.groovy (fix Groovy 4.x compat)
@@ -49,25 +49,6 @@ jobs:
             echo "Patched $FLUTTER_GROOVY"
           else
             echo "File not found: $FLUTTER_GROOVY"
-            exit 1
-          fi
-
-      - name: Patch flutter.gradle (fix proguard-android.txt -> proguard-android-optimize.txt)
-        run: |
-          FLUTTER_GRADLE="$FLUTTER_ROOT/packages/flutter_tools/gradle/flutter.gradle"
-          if [ -f "$FLUTTER_GRADLE" ]; then
-            echo "=== ANTES DO PATCH ==="
-            grep -n "proguard-android" "$FLUTTER_GRADLE" || echo "NÃO ENCONTRADO proguard-android"
-            # Replace any occurrence of proguard-android.txt with proguard-android-optimize.txt
-            sed -i 's/proguard-android\.txt/proguard-android-optimize.txt/g' "$FLUTTER_GRADLE"
-            # Also catch the full getDefaultProguardFile call
-            sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GRADLE"
-            sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GRADLE"
-            echo "=== DEPOIS DO PATCH ==="
-            grep -n "proguard-android" "$FLUTTER_GRADLE" || echo "NÃO ENCONTRADO (patch OK)"
-            echo "Patched $FLUTTER_GRADLE"
-          else
-            echo "File not found: $FLUTTER_GRADLE"
             exit 1
           fi
 
