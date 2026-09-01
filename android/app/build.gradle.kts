@@ -13,10 +13,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     defaultConfig {
         applicationId = "com.example.matmon"
         minSdk = flutter.minSdkVersion
@@ -34,6 +30,10 @@ android {
             )
         }
     }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 flutter {
