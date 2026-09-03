@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -129,7 +130,7 @@ class GameProvider with ChangeNotifier {
 
       return Project(
         name: decoded['n'] ?? 'Projeto',
-        teamCount: decoded['tc'] ?? p.teamCount,
+        teamCount: decoded['tc'] ?? 1,
         clues: clues,
       );
     } catch (_) {
@@ -174,12 +175,13 @@ class GameProvider with ChangeNotifier {
       final seed = (_activeProject!.name.hashCode * 31 + teamNumber * 7919) & 0x7FFFFFFF;
       final shuffledClues = List<Clue>.from(clues)..shuffle(Random(seed));
 
-      // Distribuição anti-repetição: equipes vizinhas recebem versículos diferentes.
+// Distribuição anti-repetição: equipes vizinhas recebem versículos diferentes.
       // Ex.: 4 equipes e 2 versículos -> equipes 1,3 veem o 1º; equipes 2,4 veem o 2º.
       List<Map<String, String>> route = [];
       for (var clue in shuffledClues) {
-        if (clue.verses.isEmpty) continue;
-        final selectedVerse = clue.verses[(teamNumber - 1) % clue.verses.length];
+        final teamVerses = clue.versesByTeam[teamNumber] ?? clue.versesByTeam[1] ?? [];
+        if (teamVerses.isEmpty) continue;
+        final selectedVerse = teamVerses[0]; // Primeiro versículo da equipe
         route.add({'v': selectedVerse, 'k': clue.keyword});
       }
 

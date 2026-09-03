@@ -15,9 +15,9 @@ void main() {
       name: 'Acampamento Teste',
       teamCount: 4,
       clues: [
-        Clue(keyword: 'PAO', verses: ['João 6:35', 'Êxodo 16:4']),
-        Clue(keyword: 'AGUA', verses: ['João 4:14', 'Números 20:11']),
-        Clue(keyword: 'LUZ', verses: ['João 8:12']),
+        Clue.legacy(keyword: 'PAO', verses: ['João 6:35', 'Êxodo 16:4']),
+        Clue.legacy(keyword: 'AGUA', verses: ['João 4:14', 'Números 20:11']),
+        Clue.legacy(keyword: 'LUZ', verses: ['João 8:12']),
       ],
     );
   }
@@ -140,8 +140,8 @@ void main() {
     });
 
     test('IDs são únicos entre instâncias', () {
-      final a = Clue(keyword: 'A', verses: ['x']);
-      final b = Clue(keyword: 'B', verses: ['y']);
+      final a = Clue.legacy(keyword: 'A', verses: ['x']);
+      final b = Clue.legacy(keyword: 'B', verses: ['y']);
       expect(a.id, isNot(b.id));
     });
   });

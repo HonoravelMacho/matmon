@@ -43,6 +43,9 @@ class Clue {
     return versesByTeam[teamNumber] ?? versesByTeam[1] ?? [];
   }
 
+// Versões para compatibilidade retroativa (retorna versículos da equipe 1)
+  List<String> get verses => versesByTeam[1] ?? [];
+
   // Obter todos os números de equipe que têm versículos
   List<int> get teamNumbers => versesByTeam.keys.toList()..sort();
 
