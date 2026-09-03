@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../domain/entities/project.dart';
 import '../../domain/entities/clue.dart';
@@ -84,6 +85,58 @@ class GameProvider with ChangeNotifier {
     return jsonEncode(p.toJson());
   }
 
+  // Gera um link de compartilhamento "modo caçador" - apenas o necessário para a caça
+  // Oculta o conteúdo bruto do mapa e pistas do organizador, permitindo apenas a jogabilidade
+  String generateHunterShareLink(Project p) {
+    // Cria uma versão simplificada: mantém a estrutura de clues com palavras-chave
+    // mas em formato simplificado para o modo de caça
+    final List<Map<String, dynamic>> simplifiedClues = [];
+    for (var clue in p.clues) {
+      final simplifiedCipher = CryptoUtil.toAlphanumeric(clue.keyword);
+      simplifiedClues.add({
+        'k': simplifiedCipher, // Apenas a cifra, não a palavra original
+        'vbt': clue.versesByTeam.map((k, v) => MapEntry(k.toString(), v)),
+      });
+    }
+    return jsonEncode({
+      'n': p.name,
+      'tc': p.teamCount,
+      'c': simplifiedClues,
+    });
+  }
+
+  // Decodifica um mapa no formato modo caçador
+  Project? importHunterMapFromJson(String mapJson) {
+    try {
+      final decoded = jsonDecode(mapJson);
+      // Transformar a cifra de volta - o Project.fromJson espera 'k' como palavra-chave
+      // Mas temos apenas a cifra aqui, então precisamos tratar isso
+      // Por enquanto, vamos tratar o 'k' como cifra alfanumérica direta
+      final cluesList = decoded['c'] as List?;
+      if (cluesList == null) return null;
+
+      final List<Clue> clues = [];
+      for (var clueJson in cluesList) {
+        final cipher = clueJson['k'] ?? '';
+        final vbt = clueJson['vbt'] as Map?;
+        if (vbt != null) {
+          final versesByTeam = (vbt as Map).map(
+            (k, v) => MapEntry(int.parse(k.toString()), List<String>.from(v)),
+          );
+          clues.add(Clue(keyword: cipher, versesByTeam: versesByTeam));
+        }
+      }
+
+      return Project(
+        name: decoded['n'] ?? 'Projeto',
+        teamCount: decoded['tc'] ?? p.teamCount,
+        clues: clues,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   // Decodifica um mapa sem iniciar o jogo (para saber quantas equipes existem)
   int? peekTeamCount(String mapJson) {
     try {
@@ -143,7 +196,8 @@ class GameProvider with ChangeNotifier {
   // Validação do QR físico contra a cifra Gematria da palavra-chave
   void validateQr(String scannedData) {
     final expected = CryptoUtil.toAlphanumeric(currentClue['k'] ?? '');
-    final received = scannedData.trim().toUpperCase();
+    // Extrai apenas a cifra (parte antes de '|') se vier com formatação extra
+    final received = scannedData.trim().toUpperCase().split('|').first;
 
     if (received == expected) {
       _currentIndex++;
@@ -172,5 +226,31 @@ class GameProvider with ChangeNotifier {
     _hunterRoute = [];
     _currentIndex = 0;
     notifyListeners();
+  }
+
+  // ---------- EXPORTAR / IMPORTAR MAPAS PREMIAREADOS ----------
+
+  // Exporta o mapa atual como texto JSON (todas as pistas separadas por palavra-chave)
+  String exportMapAsJson(Project p) {
+    return jsonEncode(p.toJson());
+  }
+
+  // Importa um mapa do texto JSON - retorna o objeto Project ou null se inválido
+  Project? importMapFromJson(String mapJson) {
+    try {
+      final decoded = jsonDecode(mapJson);
+      return Project.fromJson(decoded);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Exporta o mapa para a área temporária do dispositivo e retorna o caminho do arquivo
+  Future<String?> exportMapToFile(Project p) async {
+    final json = exportMapAsJson(p);
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/matmon_map_${p.name}.json');
+    await file.writeAsString(json);
+    return file.path;
   }
 }

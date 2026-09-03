@@ -44,11 +44,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
-              String link = provider.generateShareLink(project);
-              Clipboard.setData(ClipboardData(text: link));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Mapa copiado! Cole na tela de Jesus.")),
-              );
+              // Pergunta ao usuário qual tipo de compartilhamento deseja
+              _showShareOptions(context, provider, project);
             },
           ),
         ],
@@ -133,6 +130,73 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         label: const Text("Nova Pista"),
         icon: const Icon(Icons.add),
         onPressed: () => _showAddClueDialog(context, provider, project),
+      ),
+    );
+  }
+
+  void _showShareOptions(BuildContext context, GameProvider provider, Project project) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Compartilhar Mapa"),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.qr_code),
+                title: const Text("Compartilhar Completo (Organizador)"),
+                subtitle: const Text("Compartilha todas as pistas e versículos"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  String link = provider.generateShareLink(project);
+                  Clipboard.setData(ClipboardData(text: link));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Mapa completo copiado! Cole na tela de Jesus.")),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.sports_esports),
+                title: const Text("Compartilhar Modo Caça"),
+                subtitle: const Text("Apenas o necessário para caçar pistas"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  String link = provider.generateHunterShareLink(project);
+                  Clipboard.setData(ClipboardData(text: link));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Mapa modo caça copiado! Cole na tela de Jesus ou caçadores.")),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.download),
+                title: const Text("Exportar Mapa"),
+                subtitle: const Text("Salva o mapa no dispositivo"),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final filePath = await provider.exportMapToFile(project);
+                  if (filePath != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Mapa exportado: ${filePath.split('/').last}")),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.import_contacts),
+                title: const Text("Importar Mapa"),
+                subtitle: const Text("Carrega um mapa exportado anteriormente"),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  // TODO: Implementar seletor de arquivo
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Funcionalidade em desenvolvimento")),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

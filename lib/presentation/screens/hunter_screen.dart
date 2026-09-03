@@ -37,7 +37,47 @@ class _HunterScreenState extends State<HunterScreen> {
     }
   }
 
-  void _openScanner(BuildContext context, GameProvider game) {
+  Future<bool> _tryStartHunterWithSharedMap(BuildContext context, GameProvider game, String mapJson) async {
+    // Tenta decodificar no formato simplificado primeiro
+    final project = game.importHunterMapFromJson(mapJson);
+    if (project != null) {
+      if (!context.mounted) return false;
+      final team = await showDialog<int>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Escolha sua Equipe"),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: project.teamCount,
+              itemBuilder: (ctx, i) {
+                final n = i + 1;
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Text("$n", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                  title: Text("Equipe $n"),
+                  onTap: () => Navigator.pop(ctx, n),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (team != null && team >= 1 && team <= project.teamCount) {
+        game.startHunterGame(mapJson, team);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _openScanner(BuildContext context, GameProvider game) {
     _scannerController = MobileScannerController();
     
     showModalBottomSheet(
@@ -57,12 +97,16 @@ class _HunterScreenState extends State<HunterScreen> {
                   final barcodes = capture.barcodes;
                   if (barcodes.isNotEmpty) {
                     final code = barcodes.first.rawValue ?? "";
-                    game.validateQr(code);
+                    // Tenta iniciar com formato compartilhado primeiro
+                    final started = _tryStartHunterWithSharedMap(context, game, code);
+                    if (!started) {
+                      // Fallback: valida QR normal
+                      game.validateQr(code);
+                    }
                     Navigator.pop(ctx);
                   }
                 },
               ),
-              // Moldura de mira
               IgnorePointer(
                 child: Container(
                   width: 240,
@@ -138,7 +182,6 @@ class _HunterScreenState extends State<HunterScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Contador de progresso com selos
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(game.totalClues, (i) {
@@ -243,6 +286,46 @@ class _HunterScreenState extends State<HunterScreen> {
     }
 
     final mapJson = data.text!;
+    
+    // Tenta decodificar no formato simplificado de modo caçador primeiro
+    final project = game.importHunterMapFromJson(mapJson);
+    if (project != null) {
+      // Formato simplificado - pedir escolha de equipe
+      if (!context.mounted) return;
+      final team = await showDialog<int>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Escolha sua Equipe"),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: project.teamCount,
+              itemBuilder: (ctx, i) {
+                final n = i + 1;
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Text("$n", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                  title: Text("Equipe $n"),
+                  onTap: () => Navigator.pop(ctx, n),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (team != null && team >= 1 && team <= project.teamCount) {
+        game.startHunterGame(mapJson, team);
+      }
+      return;
+    }
+
+    // Fallback: formato antigo, usar peekTeamCount
     int? teamCount = game.peekTeamCount(mapJson);
     if (teamCount == null || teamCount < 1) {
       messenger.showSnackBar(const SnackBar(
@@ -277,8 +360,7 @@ class _HunterScreenState extends State<HunterScreen> {
             },
           ),
         ),
-      ),
-    );
+      );
 
     if (team != null) {
       game.startHunterGame(mapJson, team);
@@ -319,4 +401,3 @@ class _HunterScreenState extends State<HunterScreen> {
     );
   }
 }
-
